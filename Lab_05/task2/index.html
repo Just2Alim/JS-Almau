@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lab 05 Task 2</title>
+    <style>
+      body { font-family: Arial, sans-serif; padding: 20px; }
+      .spacer { height: 900px; }
+      #lazyTarget { padding: 16px; border: 1px solid #ccc; }
+    </style>
+  </head>
+  <body>
+    <h1 id="title">Loading...</h1>
+    <p id="status">...</p>
+
+    <button id="loadFeatureBtn">Load Advanced Feature</button>
+
+    <div class="spacer"></div>
+
+    <div id="lazyTarget">scroll here</div>
+
+    <script type="module">
+      import "./modules/app.mjs";
+    </script>
+  </body>
+</html>
