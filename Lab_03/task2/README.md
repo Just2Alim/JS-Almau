@@ -19,3 +19,4 @@ The task was completed by:
 
 ## Result
 The result demonstrates understanding of Module Pattern theory, GoF-style documentation, and both classic and modern JavaScript module approaches.
+
