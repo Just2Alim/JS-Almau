@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lab 11.2 Demo</title>
+</head>
+<body>
+  <h1>Lab 11.2: Async/Await Patterns and Data Pipeline</h1>
+  <p>Open console to see results.</p>
+
+  <script type="module">
+    import { PromiseHttpClient } from '../task1/async/PromiseHttpClient.js';
+    import { DataFetcher, fetchFirstSuccess } from './async/DataFetcher.js';
+    import {
+      AsyncPipeline,
+      mapParallel,
+      mapSequential,
+      filterParallel,
+      reduceAsync,
+      AsyncBatcher
+    } from './async/Pipeline.js';
+    import { CancellableFetcher, TaskRunner } from './async/CancellableFetcher.js';
+
+    const client = new PromiseHttpClient('https://jsonplaceholder.typicode.com');
+    const fetcher = new DataFetcher(client);
+
+    async function demoDataFetcher() {
+      console.log('--- DataFetcher Demo ---');
+
+      const userDetails = await fetcher.fetchUserWithDetails(1);
+      console.log('User with details:', userDetails);
+
+      const multiple = await fetcher.fetchMultipleUsers([1, 2, 9999]);
+      console.log('Multiple users result:', multiple);
+
+      const firstSuccess = await fetchFirstSuccess([
+        client.get('/users/9999'),
+        client.get('/users/1'),
+      ], 5000).catch((error) => {
+        console.log('First success error:', error.message);
+      });
+
+      console.log('First success:', firstSuccess);
+    }
+
+    async function demoPipeline() {
+      console.log('--- Pipeline Demo ---');
+
+      const pipeline = new AsyncPipeline();
+
+      pipeline
+        .use(async (data) => data.map((n) => n * 2))
+        .use(async (data) => data.filter((n) => n > 5))
+        .use(async (data) => data.reduce((sum, n) => sum + n, 0));
+
+      const pipelineResult = await pipeline.execute([1, 2, 3, 4, 5]);
+      console.log('Pipeline result:', pipelineResult);
+
+      const parallel = await mapParallel([1, 2, 3], async (n) => n * 10, 2);
+      console.log('mapParallel:', parallel);
+
+      const sequential = await mapSequential([1, 2, 3], async (n) => n + 1);
+      console.log('mapSequential:', sequential);
+
+      const filtered = await filterParallel([1, 2, 3, 4, 5], async (n) => n % 2 === 0, 2);
+      console.log('filterParallel:', filtered);
+
+      const reduced = await reduceAsync([1, 2, 3, 4], async (acc, n) => acc + n, 0);
+      console.log('reduceAsync:', reduced);
+
+      const batcher = new AsyncBatcher(async (items) => {
+        console.log('Batch received:', items);
+        return items.map((x) => x * 100);
+      }, { batchSize: 3, maxWaitMs: 200 });
+
+      console.log(await batcher.add(1));
+      console.log(await batcher.add(2));
+      console.log(await batcher.add(3));
+    }
+
+    async function demoCancellation() {
+      console.log('--- Cancellation Demo ---');
+
+      const cancellableFetcher = new CancellableFetcher();
+      const requestId = 'demo-request';
+
+      const requestPromise = cancellableFetcher
+        .fetch('https://jsonplaceholder.typicode.com/posts', { id: requestId })
+        .then((response) => response.json())
+        .then((data) => console.log('Fetched data:', data.slice(0, 2)))
+        .catch((error) => console.log('Cancelled fetch:', error.message));
+
+      setTimeout(() => {
+        cancellableFetcher.cancel(requestId);
+      }, 10);
+
+      await requestPromise;
+
+      const runner = new TaskRunner();
+      const { id } = runner.add(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        return 'Long task done';
+      });
+
+      const runPromise = runner.run(id).catch((error) => {
+        console.log('Task runner error:', error.message);
+      });
+
+      setTimeout(() => {
+        runner.cancel(id);
+      }, 100);
+
+      await runPromise;
+    }
+
+    async function run() {
+      try {
+        await demoDataFetcher();
+        await demoPipeline();
+        await demoCancellation();
+      } catch (error) {
+        console.error('Demo error:', error);
+      }
+    }
+
+    run();
+  </script>
+</body>
+</html>

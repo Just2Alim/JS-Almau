@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lab 11.1 Demo</title>
+</head>
+<body>
+  <h1>Lab 11.1: Promise Patterns and Retry Logic</h1>
+  <p>Open console to see results.</p>
+
+  <script type="module">
+    import PromiseHttpClient from './async/PromiseHttpClient.js';
+    import { withRetryAndTimeout, RetryableError } from './async/retry.js';
+    import { AsyncQueue } from './async/AsyncQueue.js';
+
+    const client = new PromiseHttpClient('https://jsonplaceholder.typicode.com');
+
+    async function demoHttpClient() {
+      console.log('--- HTTP Client Demo ---');
+      const user = await client.get('/users/1');
+      console.log('User:', user);
+    }
+
+    async function demoRetry() {
+      console.log('--- Retry Demo ---');
+
+      let attemptCount = 0;
+
+      const result = await withRetryAndTimeout(
+        async () => {
+          attemptCount++;
+
+          if (attemptCount < 3) {
+            throw new RetryableError('Temporary server error', 500);
+          }
+
+          return { success: true, attemptCount };
+        },
+        {
+          maxAttempts: 4,
+          baseDelay: 500,
+          timeout: 3000,
+          onRetry: ({ attempt, nextDelay }) => {
+            console.log(`Retry callback -> attempt: ${attempt}, next delay: ${nextDelay}`);
+          },
+        }
+      );
+
+      console.log('Retry result:', result);
+    }
+
+    async function demoQueue() {
+      console.log('--- Async Queue Demo ---');
+
+      const queue = new AsyncQueue(2);
+
+      const tasks = [
+        () => new Promise((resolve) => setTimeout(() => resolve('Task 1 done'), 1000)),
+        () => new Promise((resolve) => setTimeout(() => resolve('Task 2 done'), 1500)),
+        () => new Promise((resolve) => setTimeout(() => resolve('Task 3 done'), 800)),
+        () => new Promise((resolve) => setTimeout(() => resolve('Task 4 done'), 500)),
+      ];
+
+      const results = await Promise.all(tasks.map((task) => queue.add(task)));
+      console.log('Queue results:', results);
+      console.log('Queue stats:', queue.getStats());
+    }
+
+    async function run() {
+      try {
+        await demoHttpClient();
+        await demoRetry();
+        await demoQueue();
+      } catch (error) {
+        console.error('Demo error:', error);
+      }
+    }
+
+    run();
+  </script>
+</body>
+</html>
