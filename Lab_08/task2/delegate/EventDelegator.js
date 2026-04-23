@@ -2,9 +2,7 @@ export class EventDelegator {
     constructor(containerSelector) {
         this.container = document.querySelector(containerSelector);
         this.handlers = new Map();
-
         this.container.addEventListener("click", this.handleClick.bind(this));
-        this.container.addEventListener("dblclick", this.handleDoubleClick.bind(this));
     }
 
     handleClick(event) {
@@ -17,14 +15,8 @@ export class EventDelegator {
         switch (action) {
             case "toggle": this.emit("toggle", { id: itemId, completed: target.checked }); break;
             case "delete": this.emit("delete", { id: itemId }); break;
-            case "edit": this.emit("edit", { id: itemId }); break;
             case "priority": this.emit("priority", { id: itemId, priority: target.dataset.priority }); break;
         }
-    }
-
-    handleDoubleClick(event) {
-        const item = event.target.closest("[data-id]");
-        if (item) this.emit("edit-start", { id: item.dataset.id });
     }
 
     on(event, handler) {

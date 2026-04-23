@@ -4,7 +4,8 @@ export function testIndividualListeners(containerId, itemCount) {
     for (let i = 1; i <= itemCount; i++) {
         const item = container.querySelector(`[data-id="todo-${i}"]`);
         if (item) {
-            item.querySelector('input').addEventListener("change", () => { });
+            const input = item.querySelector('input');
+            if (input) input.addEventListener("change", () => { });
         }
     }
     return performance.now() - start;

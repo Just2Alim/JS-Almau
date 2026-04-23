@@ -2,7 +2,7 @@ import { ForestRenderer } from './forest/ForestRenderer.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const renderer = new ForestRenderer('forestCanvas');
-    renderer.generateForest(10000);
+    renderer.generateForest(100);
     const stats = renderer.render();
 
     document.getElementById('stats').innerHTML = `

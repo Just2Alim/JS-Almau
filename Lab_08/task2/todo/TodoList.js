@@ -28,7 +28,7 @@ export class TodoList {
         div.dataset.id = item.id;
         div.innerHTML = `
             <input type="checkbox" data-action="toggle">
-            <span class="todo-text">${item.text}</span>
+            <span>${item.text}</span>
             <button data-action="priority" data-priority="high">High</button>
             <button data-action="delete">Delete</button>
         `;
